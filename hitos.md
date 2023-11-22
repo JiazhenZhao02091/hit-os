@@ -62,7 +62,7 @@
   - cr0变为1,cr0寄存器**非常重要**
 - 在保护模式下可以通过GDT表项来进行32位寻址
 
-![image-20231117195439844](hitos.assets/image-20231117195439844.png)
+<img src="hitos.assets/image-20231117195439844.png" alt="image-20231117195439844" style="zoom:67%;" />
 
 GDT表项结构:上下各存两个字
 
@@ -124,7 +124,7 @@ boot载入操作系统，setup初始化 + 进入保护模式,head初始化页表
 
 sys_call_table是一个全局函数数组
 
-![image-20231115164444350](C:\Users\ZhaoYingJun\AppData\Roaming\Typora\typora-user-images\image-20231115164444350.png)
+<img src="C:\Users\ZhaoYingJun\AppData\Roaming\Typora\typora-user-images\image-20231115164444350.png" alt="image-20231115164444350" style="zoom: 50%;" />
 
 通过int 0x80来将DPL设置为3，此时DPL和用户CPL一样，就可以执行int 0x80代码设置用户CPL为0
 
@@ -268,7 +268,7 @@ CMOS：
 - 存在IO操作时，CPU的利用效率会大幅度下降
   - 并发多道程序同时交替执行
   - <img src="hitos.assets/image-20231121150044178.png" alt="image-20231121150044178" style="zoom: 67%;" />
-- 如何保存当前程序的状态？
+- 如何保存当前程序的状态？，，
   - 使用`PCB`记录当前程序 + 产生使用的信息
   - `PCB`存放进程信息
   - 程序 + 这些不一样的描述 => 进程 
@@ -279,5 +279,30 @@ CMOS：
     - 进程需要记录ax,bx,...
     - .....
 
+## Lession 9.
 
+- 多个进程推进，操作系统将这些进程记录好、按照合理的次序推进（分配资源，进行调度）
+- 操作系统让用户使用计算机，创建一个进程，启动Shell
+- 一个命令启动一个进程，返回Shell之后再执行其余的进程
+- 操作系统感知和组织进程全靠`PCB process control block`
+- <img src="hitos.assets/image-20231122171321669.png" alt="image-20231122171321669" style="zoom: 67%;" />
+- 多进程的组织：PCB + 状态 + 队列
+- <img src="hitos.assets/image-20231122171524245.png" alt="image-20231122171524245" style="zoom: 67%;" />
+  - 执行进程
+  - 就绪状态
+  - 等待：等待某一事件的完成
+- 交替的三部分
+  - 队列操作
+  - 调度
+  - 切换
+    - <img src="hitos.assets/image-20231122171939875.png" alt="image-20231122171939875" style="zoom: 67%;" />
+  - 进程PCB：switch_to来交换
+- 如何处理多进程的影响
+  - 多进程的地址空间分离：内存管理的主要内容
+  - <img src="hitos.assets/image-20231122171828636.png" alt="image-20231122171828636" style="zoom:67%;" />
 
+- 多进程合作
+  - 生产者消费者模型
+  - 进程同步（合理的推进顺序）（上锁）
+
+<img src="hitos.assets/image-20231122172300949.png" alt="image-20231122172300949"  />
