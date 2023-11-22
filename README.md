@@ -1,0 +1,1 @@
+### Record some condition about hit-os.
