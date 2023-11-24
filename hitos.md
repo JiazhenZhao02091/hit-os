@@ -326,10 +326,55 @@ CMOS：
 - **TCB**
 - 归根结底，线程的切换就是各种状态的切换与改变。
 - 使用 yield 切换的时候，直接弹出栈就可以，不用`jmp`，此时就已经回到了线程A
-
 - 为了避免两个线程共享资源的时候发生函数返回地址相关的问题，从一个栈到两个栈，通过 Yield 来切换栈。
-
+- <img src="hitos.assets/image-20231124094633651.png" alt="image-20231124094633651" style="zoom: 67%;" />
 - Create 也属于 yield
+- <img src="hitos.assets/image-20231124094700307.png" alt="image-20231124094700307" style="zoom:67%;" />
+- 用户级线程  Yield
+- 核心级线程  Create
+  - Yield   : 让出
+  - Schedule: 安排
+  - <img src="hitos.assets/image-20231124095317847.png" alt="image-20231124095317847" style="zoom: 67%;" />
+- 每个指令序列归根结底还是一个个函数调用。
+
+
+
+## Lession 11.内核级线程
+
+操作系统必须包含的部分：
 
 - 用户级线程
 - 核心级线程
+- 核心级进程 
+
+由用户级线程到核心级线程
+
+- 一个栈到**一套栈（用户栈 + 内核栈）**
+
+- 核心级线程切换从上到下
+- 只有内核级线程才是处理机分配的单位
+
+为什么要引入内核级线程？
+
+- 利用多核资源来并发
+- IO密集型情况
+- 更好的系统调用
+- 更好的内核支持
+- 。。。
+
+常见的多线程对应机制
+
+- 一对一：一个用户级线程对应一个核心级线程
+- 多对一：多个用户级线程对应一个核心级线程
+- 多对多：多个用户级线程对应多个核心级线程
+
+<img src="https://img-blog.csdnimg.cn/20190805111905587.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE5MDE4Mjc3,size_16,color_FFFFFF,t_70" width=33% style="text-align:center;">
+<img src="https://img-blog.csdnimg.cn/20190805112451419.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE5MDE4Mjc3,size_16,color_FFFFFF,t_70" width=33% style="text-align:center;">
+<img src="https://img-blog.csdnimg.cn/20190805113019435.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE5MDE4Mjc3,size_16,color_FFFFFF,t_70" width=33% style="text-align:center;">
+
+
+
+**进程并发与线程并发：**
+
+<img src="https://img-blog.csdnimg.cn/20190804211738805.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE5MDE4Mjc3,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述" style="zoom:50%;" />
+
