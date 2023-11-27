@@ -89,13 +89,13 @@ ok_load_setup:
 	mov	ax,#INITSEG
 	mov	es,ax
 
-! Print some inane message
+! Print some inane message 				打印输出信息
 
 	mov	ah,#0x03		! read cursor pos
 	xor	bh,bh
 	int	0x10
 	
-	mov	cx,#24
+	mov	cx,#58			; 对应的字节
 	mov	bx,#0x0007		! page 0, attribute 7 (normal)
 	mov	bp,#msg1
 	mov	ax,#0x1301		! write string, move cursor
@@ -242,10 +242,20 @@ sectors:
 	.word 0
 
 msg1:
+;  msg的大小 2 + 22 + 2 + 7 + 4  28+28=56+22=
 	.byte 13,10
-	.ascii "Loading system ..."
+	.ascii "zjz Loading system ..." ; 22
+	.byte 13,10
+	.ascii "******\n" ; 7
+	.ascii "    * \n"
+	.ascii "  *   \n"
+	.ascii "******\n"
+	; .ascii "********\n******"
 	.byte 13,10,13,10
-
+;******
+;    *  
+;  *    
+;******      
 .org 508
 root_dev:
 	.word ROOT_DEV
