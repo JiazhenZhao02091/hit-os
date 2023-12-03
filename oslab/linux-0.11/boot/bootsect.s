@@ -40,7 +40,7 @@ ENDSEG   = SYSSEG + SYSSIZE		! where to stop loading
 
 ! ROOT_DEV:	0x000 - same type of floppy as boot.
 !		0x301 - first partition on first drive etc
-ROOT_DEV = 0x306
+ROOT_DEV = 0x306  ! "设备号0x306指定根文件系统设备是第2个硬盘的第1个分区"
 
 entry _start
 _start:
@@ -54,6 +54,7 @@ _start:
 	rep
 	movw
 	jmpi	go,INITSEG
+	
 go:	mov	ax,cs
 	mov	ds,ax
 	mov	es,ax
@@ -64,6 +65,8 @@ go:	mov	ax,cs
 ! load the setup-sectors directly after the bootblock.
 ! Note that 'es' is already set up.
 
+
+! "利用BIOS 0x13中断，将setup模块从第二个扇区中读入到内存0x90200处，共读四个扇区；如果出错直接复位，重复过程"
 load_setup:
 	mov	dx,#0x0000		! drive 0, head 0
 	mov	cx,#0x0002		! sector 2, track 0
@@ -78,14 +81,14 @@ load_setup:
 
 ok_load_setup:
 
-! Get disk drive parameters, specifically nr of sectors/track
+! Get disk drive parameters, specifically nr of sectors/track  "获取磁盘驱动器参数，特别是每道的扇区数量"
 
 	mov	dl,#0x00
 	mov	ax,#0x0800		! AH=8 is get drive parameters
 	int	0x13
 	mov	ch,#0x00
 	seg cs
-	mov	sectors,cx
+	mov	sectors,cx		!"cx中是每磁道扇区数量"
 	mov	ax,#INITSEG
 	mov	es,ax
 
@@ -105,19 +108,21 @@ ok_load_setup:
 ! we want to load the system (at 0x10000)
 
 	mov	ax,#SYSSEG
-	mov	es,ax		! segment of 0x010000
-	call	read_it
-	call	kill_motor
+	mov	es,ax				! segment of 0x010000
+	call	read_it			! "读磁盘上system模块，es为输入参数"
+	call	kill_motor		! "关闭驱动器马达，这样就可以知道驱动器状态了"
 
 ! After that we check which root-device to use. If the device is
 ! defined (!= 0), nothing is done and the given device is used.
 ! Otherwise, either /dev/PS0 (2,28) or /dev/at0 (2,8), depending
 ! on the number of sectors that the BIOS reports currently.
+! "接下来我们检查使用哪个根文件系统设备，如果已经指定了就使用指定的根文件系统设备；否则就根据BIOS报告的每磁道扇区数来确定使用哪个：/dev/PS0 (2,28) or /dev/at0 (2,8)"
 
 	seg cs
 	mov	ax,root_dev
 	cmp	ax,#0
 	jne	root_defined
+
 	seg cs
 	mov	bx,sectors
 	mov	ax,#0x0208		! /dev/ps0 - 1.2Mb
@@ -130,34 +135,42 @@ undef_root:
 	jmp undef_root
 root_defined:
 	seg cs
-	mov	root_dev,ax
+	mov	root_dev,ax		! "将检查过的设备号保存在 root_dev 中"
 
 ! after that (everyting loaded), we jump to
 ! the setup-routine loaded directly after
 ! the bootblock:
 
 	jmpi	0,SETUPSEG
+! "至此，本程序已经结束！"
 
-! This routine loads the system at address 0x10000, making sure
+! "下面是两个子程序，read_it用于读取磁盘上的system的模块，kill_moter用于关闭软驱的马达"
+! This routine loads the system at address 0x10000, making sure "该子程序将系统模块加载到内存地址0x10000处，并确保没跨越64KB的内存边界"
 ! no 64kB boundaries are crossed. We try to load it as fast as
-! possible, loading whole tracks whenever we can.
+! possible, loading whole tracks whenever we can. "只要可能，每次加载整条磁道的数据"
 !
 ! in:	es - starting address segment (normally 0x1000)
+! "输入：es，开始内存段地址的位置"
 !
-sread:	.word 1+SETUPLEN	! sectors read of current track
-head:	.word 0			! current head
-track:	.word 0			! current track
+
+! "1 + SETUPLEN 表示开始时已经读入了1个引导扇区和setup扇区所占扇区数"
+sread:	.word 1+SETUPLEN	! sectors read of current track "当前磁道已读扇区数"
+head:	.word 0			! current head   "当前磁头号"
+track:	.word 0			! current track  "当前磁道号"
 
 read_it:
 	mov ax,es
 	test ax,#0x0fff
-die:	jne die			! es must be at 64kB boundary
+die:	jne die			! es must be at 64kB boundary  "es的值必须位于 64KB地址边界"
 	xor bx,bx		! bx is starting address within segment
 rp_read:
 	mov ax,es
 	cmp ax,#ENDSEG		! have we loaded all yet?
 	jb ok1_read
 	ret
+
+
+
 ok1_read:
 	seg cs
 	mov ax,sectors
@@ -195,6 +208,7 @@ ok3_read:
 	xor bx,bx
 	jmp rp_read
 
+! "读当前磁道上指定开始扇区和需读扇区数的数据到es:bx开始处"
 read_track:
 	push ax
 	push bx
@@ -216,6 +230,8 @@ read_track:
 	pop bx
 	pop ax
 	ret
+
+! "若读磁盘出错，则执行驱动器复位操作，再次跳转 read_track 重试"
 bad_rt:	mov ax,#0
 	mov dx,#0
 	int 0x13
@@ -226,7 +242,7 @@ bad_rt:	mov ax,#0
 	jmp read_track
 
 !/*
-! * This procedure turns off the floppy drive motor, so
+! * This procedure turns off the floppy drive motor, so "这个程序关闭软驱的马达"
 ! * that we enter the kernel in a known state, and
 ! * don't have to worry about it later.
 ! */
@@ -239,7 +255,7 @@ kill_motor:
 	ret
 
 sectors:
-	.word 0
+	.word 0				! "存放当前启动软盘每磁道的扇区数"
 
 msg1:
 ;  msg的大小 2 + 22 + 2 + 7 + 4  28+28=56+22=
@@ -256,9 +272,12 @@ msg1:
 ;    *  
 ;  *    
 ;******      
+
+! "下面语句从地址 508 处开始"
 .org 508
 root_dev:
 	.word ROOT_DEV
+! "下面是启动盘具有引导扇区的标志，仅供BIOS中的程序加载引导扇区时识别使用，位于引导扇区的'最后'两个字节"
 boot_flag:
 	.word 0xAA55
 
