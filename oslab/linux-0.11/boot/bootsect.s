@@ -29,12 +29,15 @@ load_setup:
 	 !"使用 0x13 中断读取两个扇区参数"
      int 0x13
 
+
      jnc ok_load_setup ! "成功就跳转到ok_load_setup执行"
+
 
      mov dx,#0x0000
      mov ax,#0x0000 !"复位软盘"
      int 0x13
      jmp load_setup
+
 
 !跳转到setup执行
 ok_load_setup:
@@ -42,11 +45,13 @@ ok_load_setup:
      	
     
 msg1:
+
     .byte   13,10
     .ascii  "Jiazhen's OS is Loading..."
     .byte   13,10,13,10
     
 .org 510
+
 
 !"引导扇区正确结束的标志"
 boot_flag:

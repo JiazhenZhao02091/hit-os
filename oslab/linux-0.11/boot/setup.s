@@ -175,3 +175,4 @@ msg_kb:
 !"引导扇区正确结束的标志"
 boot_flag:
     .word   0xAA55
+
