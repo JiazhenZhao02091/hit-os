@@ -70,7 +70,7 @@ extern int sys_sgetmask();
 extern int sys_ssetmask();
 extern int sys_setreuid();
 extern int sys_setregid();
-extern int sys_iam();
+extern int sys_iam(); // extern 关键字，代表该函数已经在另外的地方实现了
 extern int sys_whoami();
 
 fn_ptr sys_call_table[] = {sys_setup, sys_exit, sys_fork, sys_read,

@@ -7,6 +7,7 @@ char msg[maxSize]; // 这样就可以在内核中保存下来，最后一位是'
 
 int sys_iam(const char *name)
 {
+    printk("hello, i'm sys_iam\n");
     char tmp[maxSize];
     int i;
     for (i = 0; i < maxSize; i++)
@@ -30,6 +31,7 @@ int sys_iam(const char *name)
 
 int sys_whoami(char *name, unsigned int size)
 {
+    printk("hello, i'm sys_whoami\n");
     int msg_size = 0;
     while (msg[msg_size] != '\0')
         msg_size++;
