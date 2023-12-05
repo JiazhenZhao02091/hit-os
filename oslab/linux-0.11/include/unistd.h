@@ -122,13 +122,15 @@
 #define __NR_ustat 62
 #define __NR_dup2 63
 #define __NR_getppid 64
-#define __NR_getpgrp 65
+#define __NR_getpgrp 65c
 #define __NR_setsid 66
 #define __NR_sigaction 67
 #define __NR_sgetmask 68
 #define __NR_ssetmask 69
 #define __NR_setreuid 70
 #define __NR_setregid 71
+#define __NR_iam 72
+#define __NR_whoami 73
 
 #define _syscall0(type, name)                 \
 	type name(void)                           \
