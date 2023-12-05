@@ -1,9 +1,11 @@
 /*
 
-!/oslab/linux-0.11
-!/oslab/Makefile
+
 !/slide
 !/tutorial
 !README.md
 !.gitignore
-oslab/linux-0.11/Image
+!/oslab/
+/oslab/bochs/
+/oslab/linux-0.11/Image
+/oslab/hdc/
