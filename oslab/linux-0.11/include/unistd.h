@@ -55,7 +55,7 @@
 #include <sys/utsname.h>
 #include <utime.h>
 
-#ifdef __LIBRARY__
+#ifdef __LIBRARY__ // 只有定义了 __LIBRARY__ 才可以使用系统调用
 
 #define __NR_setup 0 /* used only by init, to get system going */
 #define __NR_exit 1
@@ -122,13 +122,15 @@
 #define __NR_ustat 62
 #define __NR_dup2 63
 #define __NR_getppid 64
-#define __NR_getpgrp 65
+#define __NR_getpgrp 65c
 #define __NR_setsid 66
 #define __NR_sigaction 67
 #define __NR_sgetmask 68
 #define __NR_ssetmask 69
 #define __NR_setreuid 70
 #define __NR_setregid 71
+#define __NR_iam 72
+#define __NR_whoami 73
 
 #define _syscall0(type, name)                 \
 	type name(void)                           \
@@ -177,6 +179,15 @@
 		系统会根据 0x80 来查找 IDT 表，进而得出 system_call 函数的位置并根据函数名称来进行系统调用
 	* 为什么用户只能通过 0x80 中断来进行系统调用？
 		只有 0x80 中断的系统们DPL被设置为3，其余的中断用户没有权限访问
+	set_system_gate(0x80,&system_call);
+*/
+/*
+	应用程序调用库函数（API）；
+	API 将系统调用号存入 EAX，然后通过中断调用使系统进入内核态；
+	内核中的中断处理函数根据系统调用号，调用对应的内核函数（系统调用）；
+	系统调用完成相应功能，将返回值存入 EAX，返回到中断处理函数；
+	中断处理函数返回到 API 中；
+	API 将 EAX 返回给应用程序。
 */
 #define _syscall3(type, name, atype, a, btype, b, ctype, c)                                   \
 	type name(atype a, btype b, ctype c)                                                      \

@@ -58,7 +58,7 @@ sa_mask = 4
 sa_flags = 8
 sa_restorer = 12
 
-nr_system_calls = 72
+nr_system_calls = 74      
 
 /*
  * Ok, I get parallel printer interrupts while using the floppy for some
@@ -84,14 +84,14 @@ system_call:
 	push %es
 	push %fs
 	pushl %edx
-	pushl %ecx		# push %ebx,%ecx,%edx as parameters
+	pushl %ecx		# push %ebx,%ecx,%edx as parameters		"传递给系统调用的参数"
 	pushl %ebx		# to the system call
-	movl $0x10,%edx		# set up ds,es to kernel space
+	movl $0x10,%edx		# set up ds,es to kernel space		"核心地址空间"
 	mov %dx,%ds
 	mov %dx,%es
-	movl $0x17,%edx		# fs points to local data space
+	movl $0x17,%edx		# fs points to local data space    "用户地址空间"
 	mov %dx,%fs
-	call sys_call_table(,%eax,4) # 根据 eax 即 __NR_NAME 的值来调用函数
+	call sys_call_table(,%eax,4) # "根据 eax 即 __NR_NAME 的值来调用函数  linux/sys.h"
 	pushl %eax
 	movl current,%eax
 	cmpl $0,state(%eax)		# state
@@ -132,7 +132,7 @@ coprocessor_error:
 	push %ds
 	push %es
 	push %fs
-	pushl %edx
+	pushl %edx											
 	pushl %ecx
 	pushl %ebx
 	pushl %eax
