@@ -1,0 +1,11 @@
+/*
+
+
+!/slide
+!/tutorial
+!README.md
+!.gitignore
+!/oslab/
+/oslab/bochs/
+/oslab/linux-0.11/Image
+/oslab/hdc/
