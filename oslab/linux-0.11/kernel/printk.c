@@ -14,9 +14,14 @@
 
 #include <linux/kernel.h>
 
-static char buf[1024];
+#include "linux/sched.h"
+#include "sys/stat.h"
 
-extern int vsprintf(char * buf, const char * fmt, va_list args);
+static char buf[1024];
+static char logbuf[1024];
+
+extern int
+vsprintf(char *buf, const char *fmt, va_list args);
 
 int printk(const char *fmt, ...)
 {
@@ -24,18 +29,80 @@ int printk(const char *fmt, ...)
 	int i;
 
 	va_start(args, fmt);
-	i=vsprintf(buf,fmt,args);
+	i = vsprintf(buf, fmt, args);
 	va_end(args);
 	__asm__("push %%fs\n\t"
-		"push %%ds\n\t"
-		"pop %%fs\n\t"
-		"pushl %0\n\t"
-		"pushl $buf\n\t"
-		"pushl $0\n\t"
-		"call tty_write\n\t"
-		"addl $8,%%esp\n\t"
-		"popl %0\n\t"
-		"pop %%fs"
-		::"r" (i):"ax","cx","dx");
+			"push %%ds\n\t"
+			"pop %%fs\n\t"
+			"pushl %0\n\t"
+			"pushl $buf\n\t"
+			"pushl $0\n\t"
+			"call tty_write\n\t"
+			"addl $8,%%esp\n\t"
+			"popl %0\n\t"
+			"pop %%fs" ::"r"(i) : "ax", "cx", "dx");
 	return i;
 }
+
+// write（）实现
+// 写入Log
+int fprintk(int fd, const char *fmt, ...)
+{
+	va_list args;
+	int count;
+	struct file *file;
+	struct m_inode *inode;
+
+	va_start(args, fmt);
+	count = vsprintf(logbuf, fmt, args);
+	va_end(args);
+	/* 如果输出到stdout或stderr，直接调用sys_write即可 */
+	if (fd < 3)
+	{
+		__asm__("push %%fs\n\t"
+				"push %%ds\n\t"
+				"pop %%fs\n\t"
+				"pushl %0\n\t"
+				/* 注意对于Windows环境来说，是_logbuf,下同 */
+				"pushl $logbuf\n\t"
+				"pushl %1\n\t"
+				/* 注意对于Windows环境来说，是_sys_write,下同 */
+				"call sys_write\n\t"
+				"addl $8,%%esp\n\t"
+				"popl %0\n\t"
+				"pop %%fs" ::"r"(count),
+				"r"(fd) : "ax", "cx", "dx");
+	}
+	else
+	/* 假定>=3的描述符都与文件关联。事实上，还存在很多其它情况，这里并没有考虑。*/
+	{
+		/* 从进程0的文件描述符表中得到文件句柄 */
+		if (!(file = task[0]->filp[fd]))
+			return 0;
+		inode = file->f_inode;
+
+		__asm__("push %%fs\n\t"
+				"push %%ds\n\t"
+				"pop %%fs\n\t"
+				"pushl %0\n\t"
+				"pushl $logbuf\n\t"
+				"pushl %1\n\t"
+				"pushl %2\n\t"
+				"call file_write\n\t"
+				"addl $12,%%esp\n\t"
+				"popl %0\n\t"
+				"pop %%fs" ::"r"(count),
+				"r"(file), "r"(inode) : "ax", "cx", "dx");
+	}
+	return count;
+}
+
+/*
+
+// 向stdout打印正在运行的进程的ID
+fprintk(1, "The ID of running process is %ld", current->pid);
+
+// 向log文件输出跟踪进程运行轨迹
+fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'R', jiffies);
+
+*/

@@ -205,6 +205,7 @@ sys_execve:
 	ret
 
 .align 2
+; 创建进程
 sys_fork:
 	call find_empty_process
 	testl %eax,%eax

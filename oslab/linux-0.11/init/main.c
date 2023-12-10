@@ -136,6 +136,12 @@ void main(void) /* This really IS void, no error here. */
 	floppy_init();
 	sti();
 	move_to_user_mode();
+	// 加载文件系统
+	setup((void *)&drive_info);
+	(void)open("/dev/tty0", O_RDWR, 0);									// stdin  0
+	(void)dup(0);														// stdout  1
+	(void)dup(0);														// stderror  2
+	(void)open("/var/process.log", O_CREAT | O_TRUNC | O_WRONLY, 0666); // log  3
 	if (!fork())
 	{ /* we count on this going ok */
 		init();
@@ -171,11 +177,17 @@ static char *envp[] = {"HOME=/usr/root", NULL};
 void init(void)
 {
 	int pid, i;
-
-	setup((void *)&drive_info);
-	(void)open("/dev/tty0", O_RDWR, 0);
-	(void)dup(0);
-	(void)dup(0);
+	/*
+		// 加载文件系统
+		setup((void *)&drive_info);
+		// 建立文件描述符0和/dev/tty0/的管理
+		(void)open("/dev/tty0", O_RDWR, 0);
+		// 文件描述符1
+		(void)dup(0);
+		// 文件描述符2
+		(void)dup(0);
+		// 上面这段代码建立了文件描述符 0、1 和 2，它们分别就是 stdin、stdout 和 stderr
+	*/
 	printf("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS,
 		   NR_BUFFERS * BLOCK_SIZE);
 	printf("Free mem: %d bytes\n\r", memory_end - main_memory_start);
