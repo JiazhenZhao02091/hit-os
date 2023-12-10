@@ -68,12 +68,16 @@ int copy_mem(int nr, struct task_struct *p)
  * information (task[nr]) and sets up the necessary registers. It
  * also copies the data segment in it's entirety.
  */
+/*
+	+ 基本任务是在内核中维护一个日志文件 /var/process.log
+	+ 把从操作系统启动到系统关机过程中所有进程的运行轨迹都记录在这一 log 文件中。
+	fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'R', jiffies);
+*/
 int copy_process(int nr, long ebp, long edi, long esi, long gs, long none,
 				 long ebx, long ecx, long edx,
 				 long fs, long es, long ds,
 				 long eip, long cs, long eflags, long esp, long ss)
 {
-
 	/*
 		新建状态 N
 	*/
@@ -87,9 +91,11 @@ int copy_process(int nr, long ebp, long edi, long esi, long gs, long none,
 	task[nr] = p;
 	*p = *current; /* NOTE! this doesn't copy the supervisor stack */
 	p->state = TASK_UNINTERRUPTIBLE;
-	p->pid = last_pid;
+	p->pid = last_pid; // last_pid == 0
+	printk("pid = %d\n", p->pid);
+	fprintk(3, "%ld\t%c\t%ld\n", p->pid, 'N', jiffies);
 	p->father = current->pid;
-	p->counter = p->priority;
+	p->counter = p->priority; //
 	p->signal = 0;
 	p->alarm = 0;
 	p->leader = 0; /* process leadership doesn't inherit */
@@ -143,6 +149,7 @@ int copy_process(int nr, long ebp, long edi, long esi, long gs, long none,
 	/*
 		就绪状态 J
 	*/
+	fprintk(3, "%ld\t%c\t%ld\n", p->pid, 'J', jiffies);
 	return last_pid;
 }
 

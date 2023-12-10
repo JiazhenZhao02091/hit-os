@@ -128,7 +128,10 @@ void schedule(void)
 			}
 			if (((*p)->signal & ~(_BLOCKABLE & (*p)->blocked)) &&
 				(*p)->state == TASK_INTERRUPTIBLE)
+			{
 				(*p)->state = TASK_RUNNING;
+				fprintk(3, "%ld\t%c\t%ld\n", (*p)->pid, 'R', jiffies);
+			}
 		}
 
 	/* this is the scheduler proper: */
@@ -159,6 +162,7 @@ void schedule(void)
 int sys_pause(void)
 {
 	current->state = TASK_INTERRUPTIBLE; // 睡眠
+	fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	schedule();
 	return 0;
 }
@@ -176,11 +180,15 @@ void sleep_on(struct task_struct **p)
 	// 进入睡眠状态
 	current->state = TASK_UNINTERRUPTIBLE; // 只可以使用 wake_up唤醒
 	// 记录时间开始
+	fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	schedule();
 	// 唤醒队列中的上一个（tmp）睡眠进程。0 换作 TASK_RUNNING 更好
 	// 在记录进程被唤醒时一定要考虑到这种情况，实验者一定要注意!!!
 	if (tmp)
-		tmp->state = 0;
+	{
+		tmp->state = TASK_RUNNING; // 0
+		fprintk(3, "%ld\t%c\t%ld\n", tmp->pid, 'R', jiffies);
+	}
 }
 
 void interruptible_sleep_on(struct task_struct **p)
@@ -195,6 +203,7 @@ void interruptible_sleep_on(struct task_struct **p)
 	*p = current;
 repeat:
 	current->state = TASK_INTERRUPTIBLE;
+	fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	schedule();
 	// 判断唤醒的进程和 current进程是不是一个
 	if (*p && *p != current)
@@ -211,7 +220,8 @@ void wake_up(struct task_struct **p)
 {
 	if (p && *p)
 	{
-		(**p).state = 0;
+		(**p).state = TASK_RUNNING; // TASK_RUNNING = 0
+		fprintk(3, "%ld\t%c\t%ld\n", (**p).pid, 'R', jiffies);
 		*p = NULL;
 	}
 }
