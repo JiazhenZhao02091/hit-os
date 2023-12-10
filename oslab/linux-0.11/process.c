@@ -13,21 +13,24 @@ void cpuio_bound(int last, int cpu_time, int io_time);
 /*
     + 所有子进程都并行运行，每个子进程的实际运行时间一般不超过 30 秒；
     + 父进程向标准输出打印所有子进程的 id，并在所有子进程都退出后才退出；
+    fork();
+    wait();
 */
 int main(int argc, char *argv[])
 {
     /*
-        fork();
-        wait();
+
     */
+    int pid_list[5];                // pid list
+    int pid_index = 0;              // pid index/number
+    int fork_numer = atoi(argv[1]); // 参数1， 参数0为./process
+    srand(time(NULL));              // init time to get random.
     if (argc < 2)
     {
         printf("argment count is to less!!!\n");
         return 0;
     }
-    int pid_list[5];
-    int pid_index = 0;
-    int fork_numer = atoi(argv[1]); // 参数1， 参数0为./process
+
     for (int i = 0; i < fork_numer; i++)
     {
         int pid = fork();
@@ -35,7 +38,10 @@ int main(int argc, char *argv[])
             printf("create fork errr!\n");
         if (!pid)
         {
-            printf("I'am %d children fork\n", getpid());
+            // int total_time = rand() % 10 + 1;
+            int total_time = getpid() % 29 + 1; // time <= 30
+            printf("I'am %d children fork. total time is %d\n", getpid(), total_time);
+            cpuio_bound(total_time, i, total_time - i); // total_time cpu_time io_time
             exit(EXIT_SUCCESS);
         }
         else
@@ -43,9 +49,7 @@ int main(int argc, char *argv[])
             pid_list[pid_index++] = pid;
         }
     }
-    // output all children fork pid;
-    for (int i = 0; i < pid_index; i++)
-        printf("process %d pid is %d.\n", i, pid_list[i]);
+
     /*
         wait all children fork exit;
         wait() 只会等待任意一个子进程退出，因此需要for循环来等待子进程结束
@@ -55,6 +59,9 @@ int main(int argc, char *argv[])
         int pid = wait(NULL);
         printf("I'm father process and I'm end wait, children_pid = %d\n", pid);
     }
+    // output all children fork pid;
+    for (int i = 0; i < pid_index; i++)
+        printf("process %d pid is %d.\n", i, pid_list[i]);
 
     /*
         int fpid = fork();
