@@ -118,9 +118,9 @@ struct task_struct
 #define INIT_TASK                                                                                                                                                                                                      \
 	/* state etc */ {                                                                                                                                                                                                  \
 		0, 15, 15,                                                                                                                                                                                                     \
-			/* signals */ 0, {                                                                                                                                                                                         \
-								 {},                                                                                                                                                                                   \
-							 },                                                                                                                                                                                        \
+			/* state,counter,prority,修改时间片signals */ 0, {                                                                                                                                                         \
+																 {},                                                                                                                                                   \
+															 },                                                                                                                                                        \
 			0, /* ec,brk... */ 0, 0, 0, 0, 0, 0, /* pid etc.. */ 0, -1, 0, 0, 0, /* uid etc */ 0, 0, 0, 0, 0, 0, /* alarm */ 0, 0, 0, 0, 0, 0, /* math */ 0, /* fs info */ -1, 0022, NULL, NULL, NULL, 0, /* filp */ { \
 																																																		   NULL,       \
 																																																	   },              \
