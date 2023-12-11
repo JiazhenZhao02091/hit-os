@@ -130,7 +130,7 @@ void schedule(void)
 				(*p)->state == TASK_INTERRUPTIBLE)
 			{
 				(*p)->state = TASK_RUNNING;
-				fprintk(3, "%ld\t%c\t%ld\n", (*p)->pid, 'R', jiffies);
+				fprintk(3, "%ld\t%c\t%ld\n", (*p)->pid, 'J', jiffies); // 刚唤醒属于就绪态
 			}
 		}
 
@@ -149,20 +149,28 @@ void schedule(void)
 			if ((*p)->state == TASK_RUNNING && (*p)->counter > c)
 				c = (*p)->counter, next = i;
 		}
-		if (c)
+		if (c) // 找到counter最大的进程并且是就绪态
 			break;
 		for (p = &LAST_TASK; p > &FIRST_TASK; --p)
 			if (*p)
 				(*p)->counter = ((*p)->counter >> 1) +
 								(*p)->priority;
 	}
+	// switch_to 切换进程，但是由于这里是通过汇编进行切换，因此需要提前记录
+	if (task[next]->pid != current->pid)
+	{
+		if (current->state == TASK_RUNNING)
+			fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'J', jiffies);
+		fprintk(3, "%ld\t%c\t%ld\n", task[next]->pid, 'R', jiffies);
+	}
 	switch_to(next);
 }
 
 int sys_pause(void)
 {
+	if (current->state != TASK_INTERRUPTIBLE)
+		fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	current->state = TASK_INTERRUPTIBLE; // 睡眠
-	fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	schedule();
 	return 0;
 }
@@ -178,16 +186,19 @@ void sleep_on(struct task_struct **p)
 	tmp = *p;
 	*p = current;
 	// 进入睡眠状态
+	if (current->state != TASK_UNINTERRUPTIBLE)
+		fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	current->state = TASK_UNINTERRUPTIBLE; // 只可以使用 wake_up唤醒
 	// 记录时间开始
-	fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
+
 	schedule();
 	// 唤醒队列中的上一个（tmp）睡眠进程。0 换作 TASK_RUNNING 更好
 	// 在记录进程被唤醒时一定要考虑到这种情况，实验者一定要注意!!!
 	if (tmp)
 	{
+		if (tmp->state != TASK_RUNNING)
+			fprintk(3, "%ld\t%c\t%ld\n", tmp->pid, 'J', jiffies);
 		tmp->state = TASK_RUNNING; // 0
-		fprintk(3, "%ld\t%c\t%ld\n", tmp->pid, 'R', jiffies);
 	}
 }
 
@@ -202,18 +213,25 @@ void interruptible_sleep_on(struct task_struct **p)
 	tmp = *p;
 	*p = current;
 repeat:
+	if (current->state != TASK_INTERRUPTIBLE)
+		fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	current->state = TASK_INTERRUPTIBLE;
-	fprintk(3, "%ld\t%c\t%ld\n", current->pid, 'W', jiffies);
 	schedule();
 	// 判断唤醒的进程和 current进程是不是一个
 	if (*p && *p != current)
 	{
+		if ((*p)->state != 0)
+			fprintk(3, "%ld\t%c\t%ld\n", (**p).pid, 'J', jiffies);
 		(**p).state = 0;
 		goto repeat;
 	}
 	*p = NULL;
 	if (tmp)
+	{
+		if (tmp->state != 0)
+			fprintk(3, "%ld\t%c\t%ld\n", tmp->pid, 'J', jiffies);
 		tmp->state = 0;
+	}
 }
 
 void wake_up(struct task_struct **p)
@@ -221,7 +239,7 @@ void wake_up(struct task_struct **p)
 	if (p && *p)
 	{
 		(**p).state = TASK_RUNNING; // TASK_RUNNING = 0
-		fprintk(3, "%ld\t%c\t%ld\n", (**p).pid, 'R', jiffies);
+		fprintk(3, "%ld\t%c\t%ld\n", (**p).pid, 'J', jiffies);
 		*p = NULL;
 	}
 }

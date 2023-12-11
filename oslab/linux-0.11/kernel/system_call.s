@@ -203,9 +203,8 @@ sys_execve:
 	call do_execve
 	addl $4,%esp
 	ret
-
+	
 .align 2
-; 创建进程
 sys_fork:
 	call find_empty_process
 	testl %eax,%eax

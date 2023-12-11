@@ -19,7 +19,6 @@ int sys_iam(const char *name)
     }
     if (i == maxSize)
     {
-        // printk("too long!\n");
         return -EINVAL;
     }
     else
@@ -35,20 +34,13 @@ int sys_whoami(char *name, unsigned int size)
     int msg_size = 0;
     while (msg[msg_size] != '\0')
         msg_size++;
-    // printk("msg_size : %d\n", msg_size);
-    // printk("msg : %s\n", msg);
     if (size < msg_size)
         return -EINVAL;
     else
     {
-
         int i;
-        // printk("size : %d\n", size);
         for (i = 0; i < size; i++)
         {
-            // printk("ok\n");
-            // printk("name : %c\n", name[i]);
-            // printk("msg : %c\n", msg[i]);
             put_fs_byte(msg[i], name + i);
             if (msg[i] == '\0')
                 break;

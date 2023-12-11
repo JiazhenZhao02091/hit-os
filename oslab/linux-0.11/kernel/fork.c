@@ -92,8 +92,7 @@ int copy_process(int nr, long ebp, long edi, long esi, long gs, long none,
 	*p = *current; /* NOTE! this doesn't copy the supervisor stack */
 	p->state = TASK_UNINTERRUPTIBLE;
 	p->pid = last_pid; // last_pid == 0
-	printk("pid = %d\n", p->pid);
-	fprintk(3, "%ld\t%c\t%ld\n", p->pid, 'N', jiffies);
+	// printk("pid = %d\n", p->pid);
 	p->father = current->pid;
 	p->counter = p->priority; //
 	p->signal = 0;
@@ -103,6 +102,7 @@ int copy_process(int nr, long ebp, long edi, long esi, long gs, long none,
 	p->cutime = p->cstime = 0;
 	// 设置 start_time 为 jiffies
 	p->start_time = jiffies;
+	fprintk(3, "%ld\t%c\t%ld\n", p->pid, 'N', jiffies);
 	p->tss.back_link = 0;
 	p->tss.esp0 = PAGE_SIZE + (long)p;
 	p->tss.ss0 = 0x10;
